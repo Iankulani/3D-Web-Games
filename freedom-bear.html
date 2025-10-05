@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bear Jump Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(#87CEEB, #E0F7FA);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 300px;
+            border: 2px solid #333;
+            overflow: hidden;
+            background-color: #f5f5dc;
+        }
+
+        #bear {
+            position: absolute;
+            width: 60px;
+            height: 80px;
+            bottom: 0;
+            left: 50px;
+        }
+
+        .cactus {
+            position: absolute;
+            bottom: 0;
+            width: 30px;
+            height: 60px;
+        }
+
+        #score-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        #ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 20px;
+            background-color: #8B4513;
+        }
+
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #FF0000;
+            display: none;
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 100;
+        }
+
+        #restart-button {
+            display: block;
+            margin: 20px auto 0;
+            padding: 10px 20px;
+            font-size: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #restart-button:hover {
+            background-color: #45a049;
+        }
+
+        #clouds {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .cloud {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.9);
+            z-index: 200;
+        }
+
+        .game-button {
+            padding: 15px 30px;
+            font-size: 24px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        .game-button:hover {
+            background-color: #45a049;
+        }
+
+        #difficulty-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        #easy-button {
+            background-color: #4CAF50;
+        }
+
+        #medium-button {
+            background-color: #FF9800;
+        }
+
+        #hard-button {
+            background-color: #F44336;
+        }
+
+        #current-difficulty {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        #game-title {
+            font-size: 48px;
+            font-weight: bold;
+            color: #8B4513;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #instructions {
+            font-size: 18px;
+            color: #333;
+            text-align: center;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+
+        #day-night-cycle {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+        }
+
+        #sun-moon {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #FFD700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="day-night-cycle">
+            <div id="sun-moon"></div>
+        </div>
+        <div id="clouds"></div>
+        <div id="ground"></div>
+        <div id="current-difficulty">Difficulty: Medium</div>
+        <div id="score-container">Score: <span id="score">0</span></div>
+        <div id="game-over">
+            GAME OVER
+            <div>Score: <span id="final-score">0</span></div>
+            <button id="restart-button">Play Again</button>
+        </div>
+        <div id="start-screen">
+            <div id="game-title">Bear Jump</div>
+            <div id="instructions">
+                Help the bear jump over cacti by pressing SPACE or tapping the screen.<br>
+                Select a difficulty level to start:
+            </div>
+            <div id="difficulty-buttons">
+                <button id="easy-button" class="game-button">Easy</button>
+                <button id="medium-button" class="game-button">Medium</button>
+                <button id="hard-button" class="game-button">Hard</button>
+            </div>
+        </div>
+        <svg id="bear" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+            <!-- Bear body -->
+            <ellipse cx="50" cy="80" rx="40" ry="45" fill="#8B4513" />
+            
+            <!-- Bear head -->
+            <circle cx="50" cy="40" r="30" fill="#A0522D" />
+            
+            <!-- Bear ears -->
+            <circle cx="30" cy="20" r="10" fill="#8B4513" />
+            <circle cx="70" cy="20" r="10" fill="#8B4513" />
+            <circle cx="32" cy="22" r="5" fill="#5D3A1A" />
+            <circle cx="68" cy="22" r="5" fill="#5D3A1A" />
+            
+            <!-- Bear face -->
+            <ellipse cx="50" cy="45" rx="15" ry="10" fill="#D2B48C" />
+            
+            <!-- Bear eyes -->
+            <circle cx="40" cy="35" r="4" fill="black" />
+            <circle cx="60" cy="35" r="4" fill="black" />
+            <circle cx="41" cy="34" r="1" fill="white" />
+            <circle cx="61" cy="34" r="1" fill="white" />
+            
+            <!-- Bear nose -->
+            <ellipse cx="50" cy="45" rx="6" ry="4" fill="#5D3A1A" />
+            
+            <!-- Bear mouth -->
+            <path d="M45,52 Q50,56 55,52" stroke="#5D3A1A" stroke-width="2" fill="none" />
+            
+            <!-- Bear legs -->
+            <rect x="30" y="110" width="12" height="25" rx="6" fill="#8B4513" />
+            <rect x="58" y="110" width="12" height="25" rx="6" fill="#8B4513" />
+            
+            <!-- Bear arms -->
+            <rect x="15" y="70" width="10" height="30" rx="5" fill="#8B4513" />
+            <rect x="75" y="70" width="10" height="30" rx="5" fill="#8B4513" />
+        </svg>
+    </div>
+
+    <script>
+        // Game variables
+        let isGameStarted = false;
+        let isGameOver = false;
+        let score = 0;
+        let bearJumping = false;
+        let jumpHeight = 0;
+        let jumpSpeed = 0;
+        let gravity = 0.6;
+        let initialJumpSpeed = -15;
+        let gameSpeed = 5;
+        let cacti = [];
+        let lastCactusTime = 0;
+        let minCactusInterval = 700;
+        let maxCactusInterval = 2000;
+        let cactusInterval = 0;
+        let animationFrameId = null;
+        let groundOffset = 0;
+        let cloudPositions = [];
+        let dayNightCycle = 0;
+        let dayLength = 60000; // 60 seconds for a full day-night cycle
+        let currentDifficulty = 'medium'; // Default difficulty
+        
+        // Difficulty settings
+        const difficultySettings = {
+            easy: {
+                gameSpeed: 3,
+                gravity: 0.5,
+                initialJumpSpeed: -14,
+                minCactusInterval: 1200,
+                maxCactusInterval: 3000,
+                speedIncreaseFactor: 200, // Higher = slower increase
+                minCactusIntervalDecreaseFactor: 40, // Higher = slower decrease
+            },
+            medium: {
+                gameSpeed: 5,
+                gravity: 0.6,
+                initialJumpSpeed: -15,
+                minCactusInterval: 700,
+                maxCactusInterval: 2000,
+                speedIncreaseFactor: 100,
+                minCactusIntervalDecreaseFactor: 20,
+            },
+            hard: {
+                gameSpeed: 7,
+                gravity: 0.7,
+                initialJumpSpeed: -16,
+                minCactusInterval: 500,
+                maxCactusInterval: 1500,
+                speedIncreaseFactor: 50,
+                minCactusIntervalDecreaseFactor: 10,
+            }
+        };
+        
+        // DOM elements
+        const gameContainer = document.getElementById('game-container');
+        const bear = document.getElementById('bear');
+        const scoreDisplay = document.getElementById('score');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const gameOverDisplay = document.getElementById('game-over');
+        const restartButton = document.getElementById('restart-button');
+        const startScreen = document.getElementById('start-screen');
+        const easyButton = document.getElementById('easy-button');
+        const mediumButton = document.getElementById('medium-button');
+        const hardButton = document.getElementById('hard-button');
+        const cloudsContainer = document.getElementById('clouds');
+        const sunMoon = document.getElementById('sun-moon');
+        const currentDifficultyDisplay = document.getElementById('current-difficulty');
+        
+        // Initial bear position
+        const bearInitialBottom = 0;
+        const bearLeft = parseInt(window.getComputedStyle(bear).left);
+        
+        // Cactus SVG template
+        const cactusSVG = `
+            <svg class="cactus" viewBox="0 0 50 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Main cactus stem -->
+                <rect x="20" y="30" width="10" height="70" rx="2" fill="#2E8B57" />
+                
+                <!-- Left branch -->
+                <path d="M20,50 H10 V30 Q10,20 20,20 V40" fill="#2E8B57" />
+                <rect x="10" y="30" width="5" height="20" rx="2" fill="#2E8B57" />
+                
+                <!-- Right branch -->
+                <path d="M30,60 H40 V40 Q40,30 30,30 V50" fill="#2E8B57" />
+                <rect x="35" y="40" width="5" height="20" rx="2" fill="#2E8B57" />
+                
+                <!-- Cactus spikes -->
+                <line x1="18" y1="35" x2="15" y2="32" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="18" y1="45" x2="15" y2="42" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="18" y1="55" x2="15" y2="52" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="18" y1="65" x2="15" y2="62" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="18" y1="75" x2="15" y2="72" stroke="#A9A9A9" stroke-width="1" />
+                
+                <line x1="32" y1="35" x2="35" y2="32" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="32" y1="45" x2="35" y2="42" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="32" y1="55" x2="35" y2="52" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="32" y1="65" x2="35" y2="62" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="32" y1="75" x2="35" y2="72" stroke="#A9A9A9" stroke-width="1" />
+                
+                <line x1="8" y1="30" x2="5" y2="28" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="8" y1="35" x2="5" y2="33" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="8" y1="40" x2="5" y2="38" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="8" y1="45" x2="5" y2="43" stroke="#A9A9A9" stroke-width="1" />
+                
+                <line x1="40" y1="40" x2="43" y2="38" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="40" y1="45" x2="43" y2="43" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="40" y1="50" x2="43" y2="48" stroke="#A9A9A9" stroke-width="1" />
+                <line x1="40" y1="55" x2="43" y2="53" stroke="#A9A9A9" stroke-width="1" />
+            </svg>
+        `;
+
+        // Cloud generation
+        function generateClouds() {
+            cloudsContainer.innerHTML = '';
+            cloudPositions = [];
+            
+            for (let i = 0; i < 5; i++) {
+                const cloudGroup = document.createElement('div');
+                cloudGroup.style.position = 'absolute';
+                cloudGroup.style.left = `${Math.random() * 100}%`;
+                cloudGroup.style.top = `${Math.random() * 40 + 10}%`;
+                cloudGroup.style.opacity = `${Math.random() * 0.3 + 0.7}`;
+                cloudGroup.classList.add('cloud-group');
+                
+                // Create multiple cloud puffs
+                for (let j = 0; j < 3 + Math.floor(Math.random() * 3); j++) {
+                    const cloud = document.createElement('div');
+                    cloud.classList.add('cloud');
+                    
+                    const size = 30 + Math.random() * 50;
+                    cloud.style.width = `${size}px`;
+                    cloud.style.height = `${size}px`;
+                    cloud.style.left = `${j * 25}px`;
+                    cloud.style.top = `${Math.random() * 20}px`;
+                    
+                    cloudGroup.appendChild(cloud);
+                }
+                
+                cloudsContainer.appendChild(cloudGroup);
+                cloudPositions.push({
+                    element: cloudGroup,
+                    speed: 0.2 + Math.random() * 0.3,
+                    left: parseFloat(cloudGroup.style.left) / 100 * gameContainer.clientWidth
+                });
+            }
+        }
+
+        // Update clouds position
+        function updateClouds() {
+            cloudPositions.forEach((cloud, index) => {
+                cloud.left -= cloud.speed * gameSpeed;
+                
+                if (cloud.left < -200) {
+                    cloud.left = gameContainer.clientWidth + 100;
+                    cloud.element.style.top = `${Math.random() * 40 + 10}%`;
+                }
+                
+                cloud.element.style.left = `${cloud.left}px`;
+            });
+        }
+
+        // Update day-night cycle
+        function updateDayNightCycle(timestamp) {
+            dayNightCycle = (timestamp % dayLength) / dayLength;
+            
+            // Update sun/moon position
+            const angle = dayNightCycle * 2 * Math.PI;
+            const radius = gameContainer.clientHeight * 0.8;
+            const centerX = gameContainer.clientWidth / 2;
+            const centerY = gameContainer.clientHeight + 50;
+            
+            const x = centerX + radius * Math.cos(angle - Math.PI / 2);
+            const y = centerY + radius * Math.sin(angle - Math.PI / 2);
+            
+            sunMoon.style.left = `${x - 30}px`;
+            sunMoon.style.top = `${y - 30}px`;
+            
+            // Night or day
+            if (dayNightCycle > 0.5) {
+                // Night
+                const nightProgress = (dayNightCycle - 0.5) * 2; // 0 to 1
+                const brightness = 1 - nightProgress * 0.7;
+                
+                gameContainer.style.background = `linear-gradient(
+                    rgb(${Math.floor(25 * brightness)}, ${Math.floor(25 * brightness)}, ${Math.floor(112 * brightness)}),
+                    rgb(${Math.floor(25 * brightness)}, ${Math.floor(25 * brightness)}, ${Math.floor(50 * brightness)})
+                )`;
+                
+                sunMoon.style.backgroundColor = '#FFFFFF';
+                sunMoon.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.8)';
+            } else {
+                // Day
+                const dayProgress = dayNightCycle * 2; // 0 to 1
+                const midday = 1 - Math.abs(dayProgress - 0.5) * 2; // 0 to 1 to 0
+                
+                const skyBlue = 135 + midday * 120;
+                gameContainer.style.background = `linear-gradient(
+                    rgb(${Math.floor(135 + midday * 40)}, ${Math.floor(skyBlue)}, ${Math.floor(235)}),
+                    rgb(${Math.floor(224 + midday * 31)}, ${Math.floor(247)}, ${Math.floor(250)})
+                )`;
+                
+                sunMoon.style.backgroundColor = '#FFD700';
+                sunMoon.style.boxShadow = '0 0 20px rgba(255, 215, 0, 0.8)';
+            }
+        }
+
+        // Initialize the game
+        function initGame() {
+            isGameStarted = false;
+            isGameOver = false;
+            score = 0;
+            scoreDisplay.textContent = '0';
+            bearJumping = false;
+            jumpHeight = 0;
+            
+            // Apply difficulty settings
+            applyDifficultySettings();
+            
+            cacti = [];
+            lastCactusTime = 0;
+            
+            // Clear all cacti
+            document.querySelectorAll('.cactus').forEach(cactus => {
+                cactus.remove();
+            });
+            
+            // Reset bear position
+            bear.style.bottom = `${bearInitialBottom}px`;
+            
+            // Hide game over display
+            gameOverDisplay.style.display = 'none';
+            
+            // Show start screen
+            startScreen.style.display = 'flex';
+            
+            // Generate clouds
+            generateClouds();
+            
+            // Initial sun/moon position
+            updateDayNightCycle(0);
+        }
+
+        // Apply difficulty settings
+        function applyDifficultySettings() {
+            const settings = difficultySettings[currentDifficulty];
+            gameSpeed = settings.gameSpeed;
+            gravity = settings.gravity;
+            initialJumpSpeed = settings.initialJumpSpeed;
+            minCactusInterval = settings.minCactusInterval;
+            maxCactusInterval = settings.maxCactusInterval;
+            
+            // Update difficulty display
+            currentDifficultyDisplay.textContent = `Difficulty: ${currentDifficulty.charAt(0).toUpperCase() + currentDifficulty.slice(1)}`;
+        }
+
+        // Set difficulty
+        function setDifficulty(difficulty) {
+            currentDifficulty = difficulty;
+            applyDifficultySettings();
+            startGame();
+        }
+
+        // Start the game
+        function startGame() {
+            isGameStarted = true;
+            startScreen.style.display = 'none';
+            lastCactusTime = performance.now();
+            cactusInterval = minCactusInterval + Math.random() * (maxCactusInterval - minCactusInterval);
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            
+            gameLoop(performance.now());
+        }
+
+        // Game loop
+        function gameLoop(timestamp) {
+            if (!isGameStarted || isGameOver) return;
+            
+            // Update score
+            score += 0.1;
+            scoreDisplay.textContent = Math.floor(score);
+            
+            // Increase game speed over time
+            const settings = difficultySettings[currentDifficulty];
+            if (score > 50) {
+                gameSpeed = settings.gameSpeed + Math.floor(score / settings.speedIncreaseFactor);
+            }
+            
+            // Handle bear jumping
+            if (bearJumping) {
+                jumpSpeed += gravity;
+                jumpHeight += jumpSpeed;
+                
+                if (jumpHeight >= 0) {
+                    jumpHeight = 0;
+                    jumpSpeed = 0;
+                    bearJumping = false;
+                }
+                
+                bear.style.bottom = `${bearInitialBottom - jumpHeight}px`;
+            }
+            
+            // Create new cactus
+            if (timestamp - lastCactusTime > cactusInterval) {
+                createCactus();
+                lastCactusTime = timestamp;
+                cactusInterval = minCactusInterval + Math.random() * (maxCactusInterval - minCactusInterval);
+                
+                // Decrease minimum interval as score increases
+                const minInterval = Math.max(
+                    settings.minCactusInterval * 0.7, 
+                    settings.minCactusInterval - Math.floor(score / settings.minCactusIntervalDecreaseFactor) * 10
+                );
+                minCactusInterval = minInterval;
+            }
+            
+            // Move cacti
+            moveCacti();
+            
+            // Check collisions
+            checkCollisions();
+            
+            // Update ground animation
+            updateGround();
+            
+            // Update clouds
+            updateClouds();
+            
+            // Update day-night cycle
+            updateDayNightCycle(timestamp);
+            
+            // Continue the game loop
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // Create a new cactus
+        function createCactus() {
+            const cactusElement = document.createElement('div');
+            cactusElement.innerHTML = cactusSVG;
+            const cactus = cactusElement.firstElementChild;
+            
+            // Randomize cactus height based on difficulty
+            let heightRange = 30; // Default height range
+            
+            if (currentDifficulty === 'easy') {
+                heightRange = 20;
+            } else if (currentDifficulty === 'hard') {
+                heightRange = 40;
+            }
+            
+            const height = 60 + Math.random() * heightRange;
+            cactus.style.height = `${height}px`;
+            
+            // Set initial position
+            cactus.style.left = `${gameContainer.clientWidth}px`;
+            gameContainer.appendChild(cactus);
+            
+            // Add to cacti array
+            cacti.push({
+                element: cactus,
+                width: 30,
+                height: height
+            });
+        }
+
+        // Move cacti
+        function moveCacti() {
+            for (let i = 0; i < cacti.length; i++) {
+                const cactus = cacti[i];
+                const currentLeft = parseInt(cactus.element.style.left);
+                const newLeft = currentLeft - gameSpeed;
+                
+                cactus.element.style.left = `${newLeft}px`;
+                
+                // Remove cactus if it's off-screen
+                if (newLeft < -50) {
+                    cactus.element.remove();
+                    cacti.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+
+        // Update ground animation
+        function updateGround() {
+            groundOffset = (groundOffset + gameSpeed) % 20;
+            document.getElementById('ground').style.backgroundPosition = `-${groundOffset}px 0`;
+        }
+
+        // Check for collisions
+        function checkCollisions() {
+            if (isGameOver) return;
+            
+            const bearRect = {
+                left: bearLeft,
+                right: bearLeft + 60,
+                top: parseInt(bear.style.bottom) + 80,
+                bottom: parseInt(bear.style.bottom)
+            };
+            
+            for (const cactus of cacti) {
+                const cactusLeft = parseInt(cactus.element.style.left);
+                const cactusRect = {
+                    left: cactusLeft,
+                    right: cactusLeft + 30,
+                    top: cactus.height,
+                    bottom: 0
+                };
+                
+                if (
+                    bearRect.right > cactusRect.left &&
+                    bearRect.left < cactusRect.right &&
+                    bearRect.top > cactusRect.bottom &&
+                    bearRect.bottom < cactusRect.top
+                ) {
+                    gameOver();
+                    break;
+                }
+            }
+        }
+
+        // Game over
+        function gameOver() {
+            isGameOver = true;
+            finalScoreDisplay.textContent = Math.floor(score);
+            gameOverDisplay.style.display = 'block';
+            
+            // Stop animation
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+
+        // Jump function
+        function jump() {
+            if (!isGameStarted) {
+                startGame();
+                return;
+            }
+            
+            if (!bearJumping && !isGameOver) {
+                bearJumping = true;
+                jumpSpeed = initialJumpSpeed;
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', event => {
+            if (event.code === 'Space') {
+                jump();
+                event.preventDefault();
+            }
+        });
+
+        gameContainer.addEventListener('click', () => {
+            jump();
+        });
+
+        restartButton.addEventListener('click', () => {
+            initGame();
+        });
+
+        // Difficulty button event listeners
+        easyButton.addEventListener('click', () => {
+            setDifficulty('easy');
+        });
+
+        mediumButton.addEventListener('click', () => {
+            setDifficulty('medium');
+        });
+
+        hardButton.addEventListener('click', () => {
+            setDifficulty('hard');
+        });
+
+        // Initialize the game
+        initGame();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            // Update cloud positions after resize
+            cloudPositions.forEach((cloud, index) => {
+                cloud.left = parseFloat(cloud.element.style.left);
+            });
+        });
+
+        // Animation frame fallback for older browsers
+        if (!window.requestAnimationFrame) {
+            window.requestAnimationFrame = function(callback) {
+                return setTimeout(callback, 1000 / 60);
+            };
+            
+            window.cancelAnimationFrame = function(id) {
+                clearTimeout(id);
+            };
+        }
+    </script>
+</body>
+</html>
